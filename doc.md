@@ -634,9 +634,106 @@ U-Boot启动初期的核心目标是“初始化硬件、加载内核”，关�
   3. 减少资源消耗：中断处理需要栈空间和寄存器，启动初期栈和寄存器未完全初始化，关闭中断可避免不必要的资源占用。
 
 - **时机**：汇编阶段（`start.S`）一开始就关闭全局中断（如ARM的`cpsid i`指令），直到C语言阶段（`board_init_r`）初始化完中断控制器后，才按需开启中断。
-
-
 #### （2）关闭 MMU
+
+### 20、进程线程区别,Linux中如何创建进程线程?
+### 进程与线程的区别
+
+进程和线程是操作系统中两个核心的概念，主要区别如下：
+
+1. **资源占用**：
+   - 进程是资源分配的基本单位，每个进程拥有独立的内存空间、文件描述符等系统资源
+   - 线程是调度的基本单位，多个线程共享所属进程的资源，仅拥有独立的栈空间和寄存器状态
+
+2. **上下文切换**：
+   - 进程切换开销大（需要切换内存映射、寄存器等）
+   - 线程切换开销小（共享大部分资源，只需切换少量状态）
+
+3. **通信方式**：
+   - 进程间通信需要使用IPC机制（管道、消息队列、共享内存等）
+   - 线程间可通过共享内存直接通信，更高效
+
+4. **独立性**：
+   - 进程独立性强，一个进程崩溃通常不影响其他进程
+   - 线程依赖性强，一个线程崩溃可能导致整个进程崩溃
+
+
+### Linux中创建进程的方法
+
+在Linux中，主要通过`fork()`系统调用来创建新进程：
+
+```c
+#include <stdio.h>
+#include <unistd.h>
+
+int main() {
+    pid_t pid = fork();  // 创建子进程
+    
+    if (pid < 0) {
+        // 创建失败
+        perror("fork failed");
+        return 1;
+    } 
+    else if (pid == 0) {
+        // 子进程执行区域
+        printf("这是子进程，PID: %d\n", getpid());
+    } 
+    else {
+        // 父进程执行区域
+        printf("这是父进程，子进程PID: %d\n", pid);
+    }
+    
+    return 0;
+}
+```
+
+- `fork()`会创建一个与父进程几乎完全相同的副本
+- 父进程中返回子进程ID，子进程中返回0
+- 通常会结合`exec()`系列函数在子进程中执行新程序
+
+
+### Linux中创建线程的方法
+
+Linux使用POSIX线程库(pthread)创建线程：
+
+```c
+#include <stdio.h>
+#include <pthread.h>
+
+// 线程执行函数
+void *thread_function(void *arg) {
+    printf("这是新线程\n");
+    return NULL;
+}
+
+int main() {
+    pthread_t thread_id;
+    int result;
+    
+    // 创建线程
+    result = pthread_create(&thread_id, NULL, thread_function, NULL);
+    
+    if (result != 0) {
+        perror("线程创建失败");
+        return 1;
+    }
+    
+    // 等待线程结束
+    pthread_join(thread_id, NULL);
+    
+    printf("主线程结束\n");
+    return 0;
+}
+```
+
+编译时需要链接pthread库：`gcc thread_example.c -o thread_example -lpthread`
+
+- `pthread_create()`用于创建新线程
+- `pthread_join()`用于等待线程结束并回收资源
+- 线程函数返回`void*`类型，可传递参数和返回结果
+
+总结：进程是独立的执行单元，线程是进程内的执行单元，两者在资源占用、切换开销和通信方式上有显著差异。Linux通过`fork()`创建进程，通过pthread库创建线程。
+
 常见 bug 分析与定位
 五、行业知识与发展
 嵌入式软件的应用领域（工业控制、智能家居、汽车电子、物联网等）
