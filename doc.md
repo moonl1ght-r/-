@@ -848,5 +848,96 @@ int main() {
    float pi = 3.1415926;
    printf("%.2f\n", pi);  // 输出两位小数：3.14
    ```
+### 析构函数能否被声明为虚函数,为什么? ###
+析构函数可以且在多态场景下必须声明为虚函数，其核心目的是保证通过基类指针删除派生类对象时，派生类的析构函数能被正确调用，避免资源泄漏。这是 C++ 面向对象设计中 “多态销毁” 的基础原则。
+
+### makefile常用语法 ###
+基本语法结构
+目标规则格式：
+target: dependencies
+	command
+	command
+注意：命令前必须是Tab键，不能是空格。
+变量定义方式：
+# 递归展开变量 #
+VAR = value
+# 简单展开变量 # 
+VAR := value
+# 条件赋值（如果未定义才赋值）#
+VAR ?= value
+# 追加赋值 #
+VAR += value
+# 使用变量 #
+$(VAR) 或 ${VAR}
+$@    # 目标文件名
+$<    # 第一个依赖文件名
+$^    # 所有依赖文件名（去重）
+$+    # 所有依赖文件名（不去重）
+$?    # 比目标新的依赖文件名
+$*    # 模式匹配的词干部分
+
+# 隐式规则 #
+%.o: %.c
+	gcc -c $< -o $@
+
+# 静态模式规则 #
+objects = foo.o bar.o
+$(objects): %.o: %.c
+	gcc -c $< -o $@
+
+CC = gcc          # C编译器
+CXX = g++         # C++编译器
+CFLAGS = -Wall    # C编译选项
+CXXFLAGS = -Wall  # C++编译选项
+LDFLAGS = -lm     # 链接选项
 
 
+# 通配符函数 #
+sources = $(wildcard *.c)
+
+# 模式替换 #
+objects = $(patsubst %.c,%.o,$(sources))
+
+# 目录函数 #
+dir = $(dir /usr/lib/hello.c)    # 结果: /usr/lib/
+
+# 文件名函数 #
+file = $(notdir /usr/lib/hello.c) # 结果: hello.c
+
+# 条件函数 #
+result = $(if $(VAR),true,false)
+
+### GDB调试相关知识 ###
+gcc -g -o program program.c
+g++ -g -std=c++11 -o program program.cpp
+
+启动GDB：
+gdb program                    # 直接启动
+gdb program core              # 分析core文件
+gdb -p PID                    # 附加到运行中的进程
+gdb program --args arg1 arg2  # 带参数启动
+run (r)                # 运行程序
+run arg1 arg2         # 带参数运行
+continue (c)          # 继续执行
+step (s)              # 单步执行（进入函数）
+next (n)              # 单步执行（不进入函数）
+finish                # 执行完当前函数
+until                 # 执行到当前循环结束
+quit (q)              # 退出GDB
+break main                    # 在main函数设置断点
+break file.c:10              # 在指定文件第10行设置断点
+break function_name          # 在函数入口设置断点
+break *0x400000             # 在内存地址设置断点
+break if condition          # 条件断点
+
+# 临时断点 #
+tbreak main                 # 只触发一次的断点
+
+print variable (p)          # 打印变量值
+print *pointer             # 打印指针指向的值
+print array[0]@10          # 打印数组前10个元素
+display variable           # 每次停止时自动显示变量
+undisplay 1               # 取消自动显示
+
+# 修改变量值 #
+set variable = value
